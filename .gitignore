@@ -1,0 +1,41 @@
+# Data files and folders
+raw/
+bronze/
+silver/
+gold/
+data/
+
+# Data extensions (in case any strays are in other folders)
+*.csv
+*.parquet
+*.xlsx
+*.xls
+*.json
+*.zip
+*.tar
+*.gz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv/
+env.bak/
+venv.bak/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

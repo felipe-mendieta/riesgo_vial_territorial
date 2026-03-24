@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gerencial: Riesgo Vial Territorial</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Premium Dark Mode Colors */
+            --bg-color: #0f172a; /* Slate 900 */
+            --panel-bg: rgba(30, 41, 59, 0.7); /* Slate 800 with opacity */
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #3b82f6; /* Blue 500 */
+            --accent-danger: #ef4444; /* Red 500 */
+            --accent-warning: #f59e0b; /* Amber 500 */
+            --accent-success: #10b981; /* Emerald 500 */
+
+            /* Glassmorphism */
+            --glass-blur: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            /* Subtle dark gradient background */
+            background: radial-gradient(circle at 15% 50%, rgba(15, 23, 42, 1), rgba(2, 6, 23, 1));
+            padding: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        /* KPIs Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            animation: fadeIn 0.6s ease-out backwards;
+        }
+
+        .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+        .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-header i {
+            font-size: 1.2rem;
+            color: var(--accent-primary);
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .kpi-sub {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .kpi-trend.danger { color: var(--accent-danger); }
+        .kpi-trend.success { color: var(--accent-success); }
+        .kpi-trend.warning { color: var(--accent-warning); }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            animation: fadeIn 0.6s ease-out backwards;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card:nth-child(1) { animation-delay: 0.2s; }
+        .chart-card:nth-child(2) { animation-delay: 0.3s; }
+        .chart-card:nth-child(3) { animation-delay: 0.4s; }
+        .chart-card:nth-child(4) { animation-delay: 0.5s; }
+
+        .chart-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+        }
+
+        .chart-insights {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--panel-border);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .insight-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .badge-info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>Centro de Inteligencia Vial</h1>
+            <p>Dashboard Estratégico de Riesgo Territorial - Año Base 2021/2023</p>
+        </div>
+        <div>
+            <!-- Placeholder for potential logo or controls -->
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-header"><i class="ri-alert-fill" style="color: var(--accent-danger);"></i> Riesgo Relativo Máx.</div>
+            <div class="kpi-value">2.11</div>
+            <div class="kpi-sub">Provincia más crítica: <span class="kpi-trend danger">Morona Santiago</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-header"><i class="ri-skull-fill" style="color: var(--text-secondary);"></i> Tasa Mortalidad Atípica</div>
+            <div class="kpi-value">35.0</div>
+            <div class="kpi-sub">Fallecidos x 100k hab. <span class="kpi-trend danger">(Peligroso)</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-header"><i class="ri-car-crash-fill" style="color: var(--accent-warning);"></i> Pico de Siniestralidad</div>
+            <div class="kpi-value">124.3</div>
+            <div class="kpi-sub">Siniestros x 10k veh. <span class="kpi-trend warning">(Santa Elena)</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-header"><i class="ri-steering-fill" style="color: var(--accent-primary);"></i> Causa Principal Nacional</div>
+            <div class="kpi-value">91%</div>
+            <div class="kpi-sub">Impericia e Imprudencia del Conductor</div>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-grid">
+
+        <!-- Chart 1: Ranking Riesgo -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title"><i class="ri-bar-chart-horizontal-fill"></i> Top 5 Provincias Críticas (IRR)</div>
+                <div class="chart-desc">Índice de Riesgo Relativo ponderando vehículos y habitantes.</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="rankingChart"></canvas>
+            </div>
+            <div class="chart-insights">
+                <span class="insight-badge badge-danger">Alerta</span> Morona Santiago lidera con riesgo desproporcionado (>2x la media). <br>
+                <strong>Acción:</strong> Priorizar fondos de control operativo en estas 5 zonas.
+            </div>
+        </div>
+
+        <!-- Chart 2: Motorización vs Mortalidad -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title"><i class="ri-bubble-chart-fill"></i> Motorización vs. Severidad</div>
+                <div class="chart-desc">Correlación entre el parque automotor y la letalidad de siniestros.</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="scatterChart"></canvas>
+            </div>
+            <div class="chart-insights">
+                <span class="insight-badge badge-danger">Anomalía Detectada</span> Morona Santiago tiene pocos vehículos matriculados pero máxima mortalidad. <br>
+                <strong>Acción:</strong> Investigar flujos de tránsito de paso o vías rurales severas.
+            </div>
+        </div>
+
+        <!-- Chart 3: Cuadrantes Siniestralidad vs Mortalidad -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title"><i class="ri-grid-fill"></i> Matriz de Respuesta Operativa</div>
+                <div class="chart-desc">Siniestros por 10k veh. vs Fallecidos por 100k hab.</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="matrixChart"></canvas>
+            </div>
+            <div class="chart-insights">
+                <span class="insight-badge badge-warning">Perfil Urbano</span> Guayas/Santa Elena: Alto volumen choques, letalidad moderada. <br>
+                <span class="insight-badge badge-danger">Perfil Rutero</span> Bolívar/Orellana: Pocos choques, pero mortales.
+            </div>
+        </div>
+
+        <!-- Chart 4: Causa Principal -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title"><i class="ri-pie-chart-2-fill"></i> Distribución de Causalidad</div>
+                <div class="chart-desc">Impericia dominante vs. Fenómenos focalizados.</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="donutChart"></canvas>
+            </div>
+            <div class="chart-insights">
+                <span class="insight-badge badge-info">Insights Nacional</span> El factor humano es la clave (Impericia/Imprudencia). Excepción: Carchi (Velocidad). <br>
+                <strong>Acción:</strong> Campañas nacionales de educación. Radares en Carchi.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts for rendering charts -->
+    <script>
+        // Common configuration for Chart.js in Dark Mode
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        const gridColor = 'rgba(255, 255, 255, 0.05)';
+        const tooltipBg = 'rgba(15, 23, 42, 0.9)';
+
+        // 1. Ranking de Riesgo (Top 5)
+        const ctxRanking = document.getElementById('rankingChart').getContext('2d');
+        new Chart(ctxRanking, {
+            type: 'bar',
+            data: {
+                labels: ['Morona Santiago', 'Santo Domingo', 'Santa Elena', 'Guayas', 'Chimborazo'],
+                datasets: [{
+                    label: 'Índice de Riesgo Relativo',
+                    data: [2.11, 1.62, 1.40, 1.33, 1.31],
+                    backgroundColor: [
+                        '#ef4444', // Red for most critical
+                        '#f87171',
+                        '#fca5a5',
+                        '#f59e0b', // Amber
+                        '#fbbf24'
+                    ],
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y', // Horizontal
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: tooltipBg }
+                },
+                scales: {
+                    x: { grid: { color: gridColor } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Scatter: Motorización vs Mortalidad
+        const ctxScatter = document.getElementById('scatterChart').getContext('2d');
+        const dataProvincias = [
+            { id: 'Morona Santiago', x: 87.1, y: 35.0, outlier: true },
+            { id: 'Guayas', x: 152.4, y: 11.0, outlier: false },
+            { id: 'Pichincha', x: 210.3, y: 10.5, outlier: false },
+            { id: 'Manabí', x: 192.1, y: 8.0, outlier: false },
+            { id: 'Azuay', x: 158.5, y: 11.6, outlier: false },
+            { id: 'Bolívar', x: 165.0, y: 24.4, outlier: false },
+            { id: 'Carchi', x: 148.2, y: 13.4, outlier: false },
+            { id: 'Chimborazo', x: 184.2, y: 17.9, outlier: false },
+            { id: 'Santa Elena', x: 103.8, y: 9.7, outlier: false },
+        ];
+
+        new Chart(ctxScatter, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Provincias Normales',
+                        data: dataProvincias.filter(d => !d.outlier).map(d => ({x: d.x, y: d.y, label: d.id})),
+                        backgroundColor: '#3b82f6',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: 'Outlier Crítico',
+                        data: dataProvincias.filter(d => d.outlier).map(d => ({x: d.x, y: d.y, label: d.id})),
+                        backgroundColor: '#ef4444',
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'triangle'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        backgroundColor: tooltipBg,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.raw.label + ': (' + ctx.raw.x.toFixed(1) + ' veh/1k, ' + ctx.raw.y.toFixed(1) + ' fall/100k)';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Motorización (Vehículos / 1k hab)', color: '#94a3b8' },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        title: { display: true, text: 'Mortalidad (Fallecidos / 100k hab)', color: '#94a3b8' },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+
+        // 3. Matrix: Siniestralidad vs Mortalidad
+        const ctxMatrix = document.getElementById('matrixChart').getContext('2d');
+        const dataMatrix = [
+            { id: 'Guayas', x: 108.5, y: 11.0, type: 'Urbano' },
+            { id: 'Santa Elena', x: 124.3, y: 9.7, type: 'Urbano' },
+            { id: 'Santo Domingo', x: 105.2, y: 18.5, type: 'Riesgo Dual' },
+            { id: 'Pichincha', x: 55.7, y: 10.5, type: 'Controlado' },
+            { id: 'Morona Santiago', x: 77.0, y: 35.0, type: 'Letalidad Rural' },
+            { id: 'Bolívar', x: 23.7, y: 24.4, type: 'Letalidad Rural' }
+        ];
+
+        new Chart(ctxMatrix, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Provincias',
+                    data: dataMatrix.map(d => ({x: d.x, y: d.y, label: d.id, type: d.type})),
+                    backgroundColor: function(ctx) {
+                        const val = ctx.raw?.type;
+                        if(val === 'Urbano') return '#8b5cf6'; // Violet
+                        if(val === 'Letalidad Rural') return '#ef4444'; // Red
+                        if(val === 'Riesgo Dual') return '#f59e0b'; // Amber
+                        return '#10b981'; // Emerald
+                    },
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: tooltipBg,
+                        callbacks: {
+                            label: (ctx) => `${ctx.raw.label} [${ctx.raw.type}]: Sin: ${ctx.raw.x}, Fall: ${ctx.raw.y}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Siniestros / 10k veh', color: '#94a3b8' },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        title: { display: true, text: 'Mortalidad / 100k hab', color: '#94a3b8' },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+
+        // 4. Donut: Causa Principal
+        const ctxDonut = document.getElementById('donutChart').getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Impericia/Imprudencia (23 prov)', 'Exceso de Velocidad (1 prov)'],
+                datasets: [{
+                    data: [95, 5], // Approximate representation for visual impact
+                    backgroundColor: [
+                        '#3b82f6', // Blue for majority
+                        '#ef4444'  // Red for Carchi exception
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8' }
+                    },
+                    tooltip: { backgroundColor: tooltipBg }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
